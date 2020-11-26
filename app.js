@@ -7,23 +7,23 @@ var cors = require('cors');
 const app = express();
 
 
-var con = mysql.createConnection({
-  host: "localhost",
-  user: "william",
-  password: "admin"
-});
+// var con = mysql.createConnection({
+//   host: "localhost",
+//   user: "william",
+//   password: "admin"
+// });
 
 
-con.connect(function(err) {
-  if (err) throw err;
-  console.log("Connected!");
-});
+// con.connect(function(err) {
+//   if (err) throw err;
+//   console.log("Connected!");
+// });
 
 app.use(express.static('public', {extensions:['html']})).use(cors())
 .use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }));
 require('./routes/authentication')(app);
-require('./routes/database')(app, con);
+// require('./routes/database')(app, con);
 require('./routes/spotify')(app);
 
 
