@@ -1,9 +1,16 @@
-var app = angular.module('myApp', []);
-app.controller('myCtrl', function($scope, $http) {
-    $http({url: '/userinfo', method: 'GET', params: {user:localStorage.getItem('user')}}).then(function(response) {
-        $scope.user = response.data;
-       
-
-    });
-  
-});
+var app = new Vue({
+    el: '#app',
+    data () {
+      return {
+        info: null
+      }
+    },
+    mounted () {
+      axios
+        .get('/userinfo', {params: {user:localStorage.getItem('user')}})
+        .then(response => {
+            this.info = response.data
+            console.log(this.info)
+        });
+    }
+  })
