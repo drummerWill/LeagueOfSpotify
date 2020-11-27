@@ -2,7 +2,8 @@ var app = new Vue({
     el: '#app',
     data () {
       return {
-        info: null
+        info: null,
+        testboy: null
       }
     },
     mounted () {
@@ -11,6 +12,12 @@ var app = new Vue({
         .then(response => {
             this.info = response.data
             console.log(this.info)
+        });
+      axios
+        .get('/connectToJson')
+        .then(response => {
+            this.testboy = response.data
+            console.log(this.testboy)
         });
     }
   })
