@@ -1,12 +1,14 @@
 var request = require('request'); // "Request" library
 var querystring = require('querystring');
+const { dirname } = require('path');
 
 var stateKey = 'spotify_auth_state';
 
 const client_id = "34be35f661924e38ab2d8c7b7f57fd27";
 const client_secret = "4023aeeb76de470c8a27cf3143f4f0ff";
-var redirect_uri = 'http://localhost:3000/callback/'; // Your redirect uri 
-
+var redirect_uri = 'https://wh-spotify.herokuapp.com/callback/'; // Your redirect uri 
+if (__dirname.includes('GitHub'))
+  redirect_uri = 'http://localhost:3000/callback/';
 
 var generateRandomString = function(length) {
   var text = '';
