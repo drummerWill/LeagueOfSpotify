@@ -1,23 +1,33 @@
+Vue.config.devtools = true;
+
 var app = new Vue({
     el: '#app',
     data () {
       return {
         info: null,
-        testboy: null
+        questions: [],
+        currentQuestion: 0,
+        question: {name:"", options: []}
       }
     },
     mounted () {
-      axios
-        .get('/usertop', {params: {user:localStorage.getItem('user')}})
+      axios.get('/usertop', {params: {user:localStorage.getItem('user')}})
         .then(response => {
-            this.info = response.data
-            console.log(this.info)
+            this.info = response.data.dates
+            this.questions = this.info
+            console.log(this.questions)
+            this.question = this.questions[this.currentQuestion]
+
         });
-      axios
-        .get('/connectToJson')
-        .then(response => {
-            this.testboy = response.data
-            console.log(this.testboy)
-        });
+      
+    },
+    methods:{
+      answer(ans){
+        let correct = ans == this.question.correctYear;
+        if (correct) alert("good job!");
+        else alert("wrong get good kid");
+        this.currentQuestion++;
+        this.question = this.questions[this.currentQuestion]
+      }
     }
   })
