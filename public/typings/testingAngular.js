@@ -8,7 +8,7 @@ var app = new Vue({
     },
     mounted () {
       axios
-        .get('/userinfo', {params: {user:localStorage.getItem('user')}})
+        .get('/usertop', {params: {user:localStorage.getItem('user')}})
         .then(response => {
             this.info = response.data
             console.log(this.info)
