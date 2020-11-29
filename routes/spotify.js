@@ -59,6 +59,11 @@ module.exports = function(app){
         res.json(sortedResult)
     })
 
+    
+    app.get('/goonlist', async function (req, res) {
+        res.json(goons)
+    })
+
 
     // app.get('/compare', async function (req, res) {
     //     console.log(valorantAgentsAnalysis)

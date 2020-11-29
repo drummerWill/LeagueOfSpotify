@@ -8,7 +8,6 @@ var app = new Vue({
         questions: [],
         currentQuestion: 0,
         question: {name:"", options: []},
-        valorant: [],
       }
     },
     mounted () {
@@ -19,10 +18,6 @@ var app = new Vue({
             // console.log(this.questions)
             this.question = this.questions[this.currentQuestion]
 
-        });
-        axios.get('/compare', {params: {user:localStorage.getItem('user')}})
-        .then(response => {
-          this.valorant = response.data;
         });
     },
     methods:{

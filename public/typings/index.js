@@ -23,7 +23,7 @@
         alert('There was an error during the authentication');
     } else {
         if (access_token) {
-            window.location.href = "/hello"
+            window.location.href = "/home"
                     localStorage.setItem('user', access_token);
            
            
