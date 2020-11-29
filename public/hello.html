@@ -3,13 +3,17 @@
 <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.min.js"></script>
 
 <div id="app">
-  <p>{{question.name}}</p>
+  <!-- <p>{{question.name}}</p>
   <template v-for="year in question.options">
     <button v-on:click="answer(year)">
       {{year}}
     </button>
-  </template>
+  </template> -->
   
+<div v-for="agent in valorant">
+<p>{{agent.agent}}                      {{agent.dif}}</p>
+</div>
+
 </div>
 
 

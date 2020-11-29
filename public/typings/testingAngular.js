@@ -7,7 +7,8 @@ var app = new Vue({
         info: null,
         questions: [],
         currentQuestion: 0,
-        question: {name:"", options: []}
+        question: {name:"", options: []},
+        valorant: [],
       }
     },
     mounted () {
@@ -15,13 +16,13 @@ var app = new Vue({
         .then(response => {
             this.info = response.data.dates
             this.questions = this.info
-            console.log(this.questions)
+            // console.log(this.questions)
             this.question = this.questions[this.currentQuestion]
 
         });
         axios.get('/compare', {params: {user:localStorage.getItem('user')}})
         .then(response => {
-
+          this.valorant = response.data;
         });
     },
     methods:{

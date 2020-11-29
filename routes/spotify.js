@@ -4,7 +4,7 @@ var mathdudes = require('./helpers/maths')
 const fs = require('fs');
 var valorantAgents = require('../jsons/valorant.json')
 var valorantAgentsAnalysis = require('../jsons/valorant-analysis.json')
-
+var valorantSummary = require('../jsons/valorant-summary.json')
 module.exports = function(app){
     
     app.get('/userinfo', function (req, res) {
@@ -23,16 +23,8 @@ module.exports = function(app){
           });
     });
 
-    app.get('/usertop', function (req, res) {
-        params = {time_range: 'long_term', limit: 50}
-        access_token = req.query.user;
-        var options = {
-            url: qb('https://api.spotify.com/v1/me/top/tracks', params),
-            headers: { 'Authorization': 'Bearer ' + access_token },
-            json: true
-        }
-        request.get(options, function(error, response, body) {
-            tracks = body.items;
+    app.get('/usertop', async function (req, res) {
+        var tracks = await getSongs(req);
             data = {dates: []}
             
             tracks.forEach(track => {
@@ -41,47 +33,59 @@ module.exports = function(app){
                 data.dates.push({name: track.name, correctYear: date.getFullYear(), options: options})
             });
 
-            res.json(data)
-        });
+            res.json(data);
     })
 
+
     app.get('/compare', async function (req, res) {
-        console.log(valorantAgentsAnalysis)
-        result = []
-        for (character in valorantAgentsAnalysis){
-            let agent = valorantAgentsAnalysis[character]
-            let energy =  agent.analysis.map(item => item.energy).reduce((prev, next) => prev + next)/agent.analysis.length;
-            let valence =  agent.analysis.map(item => item.valence).reduce((prev, next) => prev + next)/agent.analysis.length;
-            let danceability =  agent.analysis.map(item => item.danceability).reduce((prev, next) => prev + next)/agent.analysis.length;
-            let tempo =  agent.analysis.map(item => item.tempo).reduce((prev, next) => prev + next)/agent.analysis.length;
-            let acousticness =  agent.analysis.map(item => item.acousticness).reduce((prev, next) => prev + next)/agent.analysis.length;
-            let mode =  agent.analysis.map(item => item.mode).reduce((prev, next) => prev + next)/agent.analysis.length;
-            result.push({name: agent.agent, energy: energy, valence: valence, danceability: danceability, tempo: tempo, acousticness: acousticness, mode: mode})
-        }
-        fs.writeFileSync('valorant-summary.json', JSON.stringify(result))
-
-    })  
+        var tracks = await getSongs(req);
+        var ids = tracks.map(i => i.id).join(',');
+        var stats = await getStatBoys(ids, req);
+        var toCompare = decomposeFeatures(stats.audio_features, "me")
+        var result = compare(toCompare, valorantSummary)
+        var sortedResult = result.sort(function (a, b) {
+            return a.dif - b.dif;
+          });
+        res.json(sortedResult)
+    })
 
 
-    app.get('/valorant', async function (req, res) {
-        agentResults = []
-        for (const agent in valorantAgents){
-            var uri =  valorantAgents[agent];
-            thing = await getValorantPlaylist(uri, req)
-            var coolResults = await getStatBoys(thing, req)
-            var sdfdfssdfsdfsdf = coolResults.audio_features
-            var result = {agent: agent, analysis: sdfdfssdfsdfsdf}
-            agentResults.push(result)
+    // app.get('/compare', async function (req, res) {
+    //     console.log(valorantAgentsAnalysis)
+    //     result = []
+    //     for (character in valorantAgentsAnalysis){
+    //         let agent = valorantAgentsAnalysis[character]
+    //         let energy =  agent.analysis.map(item => item.energy).reduce((prev, next) => prev + next)/agent.analysis.length;
+    //         let valence =  agent.analysis.map(item => item.valence).reduce((prev, next) => prev + next)/agent.analysis.length;
+    //         let danceability =  agent.analysis.map(item => item.danceability).reduce((prev, next) => prev + next)/agent.analysis.length;
+    //         let tempo =  agent.analysis.map(item => item.tempo).reduce((prev, next) => prev + next)/agent.analysis.length;
+    //         let acousticness =  agent.analysis.map(item => item.acousticness).reduce((prev, next) => prev + next)/agent.analysis.length;
+    //         let mode =  agent.analysis.map(item => item.mode).reduce((prev, next) => prev + next)/agent.analysis.length;
+    //         result.push({name: agent.agent, energy: energy, valence: valence, danceability: danceability, tempo: tempo, acousticness: acousticness, mode: mode})
+    //     }
+    //     fs.writeFileSync('valorant-summary.json', JSON.stringify(result))
 
-        }
-        fs.writeFileSync('valorant-analysis.json', JSON.stringify(agentResults))
-    })  
+    // })  
+
+
+    // app.get('/valorant', async function (req, res) {
+    //     agentResults = []
+    //     for (const agent in valorantAgents){
+    //         var uri =  valorantAgents[agent];
+    //         thing = await getValorantPlaylist(uri, req)
+    //         var coolResults = await getStatBoys(thing, req)
+    //         var sdfdfssdfsdfsdf = coolResults.audio_features
+    //         var result = {agent: agent, analysis: sdfdfssdfsdfsdf}
+    //         agentResults.push(result)
+
+    //     }
+    //     fs.writeFileSync('valorant-analysis.json', JSON.stringify(agentResults))
+    // })  
 
 }
 
-async function getStatBoys(thing, req){
+async function getStatBoys(ids, req){
     let url = 'https://api.spotify.com/v1/audio-features'
-    var ids = thing.items.map(i => i.track.id).join(',');
     let params = {ids: ids}
     return new Promise(function(resolve){
         access_token = req.query.user;
@@ -98,21 +102,62 @@ async function getStatBoys(thing, req){
     });
 }
 
-
-async function getValorantPlaylist(uri, req){
+async function getSongs(req){
     return new Promise(function(resolve){
+        params = {time_range: 'long_term', limit: 50}
         access_token = req.query.user;
-        let url = `https://api.spotify.com/v1/playlists/${uri}/tracks`
         var options = {
-            url: url,
+            url: qb('https://api.spotify.com/v1/me/top/tracks', params),
             headers: { 'Authorization': 'Bearer ' + access_token },
             json: true
         }
         request.get(options, function(error, response, body) {
-            resolve(body);
-            
+            resolve(body.items);
         });
     })
    
 }
+
+function decomposeFeatures(features, name){
+            let energy =  features.map(item => item.energy).reduce((prev, next) => prev + next)/features.length;
+            let valence =  features.map(item => item.valence).reduce((prev, next) => prev + next)/features.length;
+            let danceability =  features.map(item => item.danceability).reduce((prev, next) => prev + next)/features.length;
+            let tempo =  features.map(item => item.tempo).reduce((prev, next) => prev + next)/features.length;
+            let acousticness =  features.map(item => item.acousticness).reduce((prev, next) => prev + next)/features.length;
+            let mode =  features.map(item => item.mode).reduce((prev, next) => prev + next)/features.length;
+            return({name: name, energy: energy, valence: valence, danceability: danceability, tempo: tempo, acousticness: acousticness, mode: mode})
+}
+
+
+function compare(user, agents){
+    agentResults = []
+    agents.forEach(agent => {
+        dif = 0;
+        for (metric in agent){
+            if (metric == "name" || metric == "tempo") continue;
+            
+            dif = dif + Math.abs(agent[metric] - user[metric])
+        }
+        agentResults.push({agent: agent.name, dif: dif})
+
+    });
+    return agentResults;
+}
+
+// async function getValorantPlaylist(uri, req){
+//     return new Promise(function(resolve){
+//         access_token = req.query.user;
+//         let url = `https://api.spotify.com/v1/playlists/${uri}/tracks`
+//         var options = {
+//             url: url,
+//             headers: { 'Authorization': 'Bearer ' + access_token },
+//             json: true
+//         }
+//         request.get(options, function(error, response, body) {
+//             resolve(body);
+            
+//         });
+//     })
+   
+// }
     
