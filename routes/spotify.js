@@ -5,6 +5,7 @@ const fs = require('fs');
 var valorantAgents = require('../jsons/valorant.json')
 var valorantAgentsAnalysis = require('../jsons/valorant-analysis.json')
 var valorantSummary = require('../jsons/valorant-summary.json')
+var goons = require('../goons.json')
 module.exports = function(app){
     
     app.get('/userinfo', function (req, res) {
@@ -34,14 +35,23 @@ module.exports = function(app){
             });
 
             res.json(data);
-    })
+    });
 
 
     app.get('/compare', async function (req, res) {
+        var userInfo = await getUserInfo(req)
+        var name = userInfo.display_name;
         var tracks = await getSongs(req);
         var ids = tracks.map(i => i.id).join(',');
         var stats = await getStatBoys(ids, req);
-        var toCompare = decomposeFeatures(stats.audio_features, "me")
+        var toCompare = decomposeFeatures(stats.audio_features, name)
+
+        if (goons.filter(g => g.name === name).length === 0){
+            goons.push(toCompare)            
+            fs.writeFileSync('goons.json', JSON.stringify(goons))
+        }
+
+        
         var result = compare(toCompare, valorantSummary)
         var sortedResult = result.sort(function (a, b) {
             return a.dif - b.dif;
@@ -143,6 +153,25 @@ function compare(user, agents){
     });
     return agentResults;
 }
+
+
+async function getUserInfo(req){
+    return new Promise(function(resolve){
+    access_token = req.query.user;
+    var options = {
+        url: 'https://api.spotify.com/v1/me',
+        headers: { 'Authorization': 'Bearer ' + access_token },
+        json: true
+        };
+
+      // use the access token to access the Spotify Web API
+      request.get(options, function(error, response, body) {
+          resolve(body)
+      });
+        });
+    }
+
+
 
 // async function getValorantPlaylist(uri, req){
 //     return new Promise(function(resolve){
