@@ -19,12 +19,15 @@ var app = new Vue({
             this.question = this.questions[this.currentQuestion]
 
         });
-      
+        axios.get('/compare', {params: {user:localStorage.getItem('user')}})
+        .then(response => {
+
+        });
     },
     methods:{
       answer(ans){
         let correct = ans == this.question.correctYear;
-        if (correct) alert("good job!");
+        if (correct) alert("Poggers!");
         else alert("wrong get good kid");
         this.currentQuestion++;
         this.question = this.questions[this.currentQuestion]
