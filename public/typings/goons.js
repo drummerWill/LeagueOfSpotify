@@ -1,21 +1,93 @@
 Vue.config.devtools = true;
+Vue.component('v-select', VueSelect.VueSelect);
 
 var app = new Vue({
     el: '#app',
     data () {
       return {
-          goons: []
+          goons: [],
+          options: [ 'energy', 'valence', 'mode', 'tempo', 'acousticness', 'danceability'],
+          xprop: 'energy',
+          yprop: 'valence',
+          chart: null
       }
     },
     mounted () {
         axios.get('/goonlist', {params: {user:localStorage.getItem('user')}})
         .then(response => {
             this.goons = response.data;
-            this.loadPlot()
+            console.log(this.goons)
+            this.loadPlot(this.xprop, this.yprop)
         });
     },
     methods:{
-        loadPlot(){
+        updateChart(xAxisProp, yAxisProp, chart, fastUpdate = false){
+            var daGoons = this.goons
+            var myData = this.goons.map(function(goon){
+                return {x: goon[xAxisProp], y: goon[yAxisProp]}
+            });
+
+            chart.data.datasets = [];
+            chart.data.datasets.push({ label: 'Scatter Dataset',
+                        data: myData,
+                        pointBackgroundColor: '#FFF',
+                        pointRadius: 4,});
+            chart.options.tooltips = {
+                callbacks: {
+                  title: function(tooltipItem, data) {
+                    return daGoons[tooltipItem[0].index].name;
+                },
+                  label: function(tooltipItem, data) {
+                    return "";
+                  },
+                },
+                backgroundColor: '#000',
+                titleFontSize: 16,
+                titleFontColor: '#FFF',
+                displayColors: false
+            },
+            chart.options.scales = {
+                yAxes:[{
+                    ticks: {
+                        suggestedMin: 0,
+                        suggestedMax: 1
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: yAxisProp,
+                        fontSize: 24
+                      } 
+                }],
+                xAxes: [{
+                    ticks: {
+                        suggestedMin: 0,
+                        suggestedMax: 1
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: xAxisProp,
+                        fontSize:24
+                      },
+                    type: 'linear',
+                    position: 'bottom'
+                }]
+            }
+            if (fastUpdate)
+                chart.update(0);
+            else
+                chart.update();
+        },
+        setSelectedx(value){
+            this.xprop = value
+            this.updateChart(this.xprop, this.yprop, this.chart)
+        },
+        setSelectedy(value){
+            this.yprop = value
+            this.updateChart(this.xprop, this.yprop, this.chart)
+
+        },
+
+        loadPlot(xprop, yprop){
             var ctx = document.getElementById('myChart');
             ctx.style.backgroundColor = 'black';
             var myData = this.goons.map(function(goon){
@@ -61,7 +133,7 @@ var app = new Vue({
                         },
                         scaleLabel: {
                             display: true,
-                            labelString: 'yAxisProp',
+                            labelString: yprop,
                             fontSize: 24
                           } 
                     }],
@@ -72,7 +144,7 @@ var app = new Vue({
                         },
                         scaleLabel: {
                             display: true,
-                            labelString: 'xAxisProp',
+                            labelString: xprop,
                             fontSize:24
                           },
                         type: 'linear',
@@ -81,6 +153,7 @@ var app = new Vue({
                 }
             }
         });
+        this.chart = scatterChart
         }
     }
   })
